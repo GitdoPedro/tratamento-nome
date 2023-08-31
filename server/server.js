@@ -1,7 +1,18 @@
-const app = require('express')()
-const server = require('http').createServer(app)
-const io = require('socket.io')(server, {cors: {origin: 'http://localhost:3000'}})
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const bodyParser = require('body-parser');
+const sequelize = require('./config/db');
+const NameModel = require('./models/nameModel');
+const nameRoutes = require('./config/routes'); 
 
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, { cors: { origin: 'http://localhost:3000' } });
+
+app.use(bodyParser.json());
+
+const PORT = 3001;
 
 io.on('connection', socket =>{
 
@@ -23,5 +34,10 @@ const capitalizeWords = inputString =>
 
 
 
-const PORT = 3001
-server.listen(PORT, () => console.log('Server runing....'))
+    const Name = NameModel(sequelize, sequelize.Sequelize.DataTypes);
+    sequelize.sync().then(() => {
+       app.use('/api/name', nameRoutes);
+      server.listen(PORT, () => console.log('Server running....'));
+    }).catch((error) => {
+      console.error('Error initializing the database:', error);
+    });
